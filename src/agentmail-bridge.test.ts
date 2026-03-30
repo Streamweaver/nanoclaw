@@ -5,16 +5,20 @@ import { formatEmailAsMessage, resolveGroupJid } from './agentmail-bridge.js';
 // --- formatEmailAsMessage ---
 
 describe('formatEmailAsMessage', () => {
-  it('includes sender, inbox ID, subject, and body', () => {
+  it('includes sender, inbox ID, messageId, threadId, subject, and body', () => {
     const result = formatEmailAsMessage({
       from: 'alice@example.com',
       to: 'inbox-123@agentmail.dev',
+      messageId: 'msg_123',
+      threadId: 'thr_456',
       subject: 'Hello there',
       text: 'This is the body',
       html: '<p>This is the body</p>',
     });
     expect(result).toContain('alice@example.com');
     expect(result).toContain('inbox-123@agentmail.dev');
+    expect(result).toContain('MsgID: msg_123');
+    expect(result).toContain('ThreadID: thr_456');
     expect(result).toContain('Hello there');
     expect(result).toContain('This is the body');
   });
@@ -23,6 +27,8 @@ describe('formatEmailAsMessage', () => {
     const result = formatEmailAsMessage({
       from: 'alice@example.com',
       to: 'inbox-123@agentmail.dev',
+      messageId: 'msg_001',
+      threadId: 'thr_001',
       text: 'Body only',
     });
     expect(result).toContain('(no subject)');
@@ -33,6 +39,8 @@ describe('formatEmailAsMessage', () => {
     const result = formatEmailAsMessage({
       from: 'alice@example.com',
       to: 'inbox-123@agentmail.dev',
+      messageId: 'msg_002',
+      threadId: 'thr_002',
       subject: 'HTML email',
       html: '<p>HTML content here</p>',
     });
@@ -43,6 +51,8 @@ describe('formatEmailAsMessage', () => {
     const result = formatEmailAsMessage({
       from: 'alice@example.com',
       to: 'inbox-123@agentmail.dev',
+      messageId: 'msg_003',
+      threadId: 'thr_003',
       subject: 'Empty email',
     });
     expect(result).toContain('(no body)');

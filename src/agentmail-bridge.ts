@@ -16,6 +16,8 @@ import { NewMessage } from './types.js';
 export interface EmailData {
   from: string;
   to: string;
+  messageId: string;
+  threadId: string;
   subject?: string;
   text?: string;
   html?: string;
@@ -37,7 +39,7 @@ export interface BridgeDeps {
 export function formatEmailAsMessage(email: EmailData): string {
   const subject = email.subject || '(no subject)';
   const body = email.text || email.html || '(no body)';
-  return `[Email from ${email.from} to ${email.to}]\nSubject: ${subject}\n\n${body}`;
+  return `[Email from ${email.from} to ${email.to} | MsgID: ${email.messageId} | ThreadID: ${email.threadId}]\nSubject: ${subject}\n\n${body}`;
 }
 
 export function resolveGroupJid(
@@ -63,6 +65,8 @@ function processInboundEmail(
   const email: EmailData = {
     from: String(data.from ?? ''),
     to: String(data.to ?? ''),
+    messageId: String(data.message_id ?? ''),
+    threadId: String(data.thread_id ?? ''),
     subject: data.subject ? String(data.subject) : undefined,
     text: data.text ? String(data.text) : undefined,
     html: data.html ? String(data.html) : undefined,
@@ -103,10 +107,19 @@ function processInboundEmail(
 
 // --- HTTP server ---
 
-function collectBody(req: http.IncomingMessage): Promise<string> {
+function collectBody(req: http.IncomingMessage, maxBytes = 1_048_576): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    let size = 0;
+    req.on('data', (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > maxBytes) {
+        req.destroy();
+        reject(new Error('Request body too large'));
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on('end', () => resolve(Buffer.concat(chunks).toString()));
     req.on('error', reject);
   });
