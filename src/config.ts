@@ -95,3 +95,18 @@ function resolveConfigTimezone(): string {
   return 'UTC';
 }
 export const TIMEZONE = resolveConfigTimezone();
+
+// --- Agentmail bridge ---
+export const AGENTMAIL_WEBHOOK_PORT = parseInt(
+  process.env.AGENTMAIL_WEBHOOK_PORT || '8800',
+  10,
+);
+export const AGENTMAIL_WEBHOOK_SECRET =
+  process.env.AGENTMAIL_WEBHOOK_SECRET || '';
+export const AGENTMAIL_INBOX_MAP: Record<string, string> = (() => {
+  try {
+    return JSON.parse(process.env.AGENTMAIL_INBOX_MAP || '{}');
+  } catch {
+    return {};
+  }
+})();
