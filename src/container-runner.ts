@@ -234,7 +234,8 @@ async function buildContainerArgs(
   // Pass host timezone so container's local time matches the user's
   args.push('-e', `TZ=${TIMEZONE}`);
 
-  // Pass Agentmail API key for the container's agentmail-mcp server
+  // TODO: Migrate to OneCLI gateway injection when Agentmail is supported.
+  // This passes the key as a plain-text env var as a temporary workaround.
   const agentmailKey = readEnvFile(['AGENTMAIL_API_KEY']).AGENTMAIL_API_KEY;
   if (agentmailKey) {
     args.push('-e', `AGENTMAIL_API_KEY=${agentmailKey}`);
