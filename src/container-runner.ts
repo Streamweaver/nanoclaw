@@ -25,6 +25,7 @@ import {
   stopContainer,
 } from './container-runtime.js';
 import { OneCLI } from '@onecli-sh/sdk';
+import { readEnvFile } from './env.js';
 import { validateAdditionalMounts } from './mount-security.js';
 import { RegisteredGroup } from './types.js';
 
@@ -232,6 +233,12 @@ async function buildContainerArgs(
 
   // Pass host timezone so container's local time matches the user's
   args.push('-e', `TZ=${TIMEZONE}`);
+
+  // Pass Agentmail API key for the container's agentmail-mcp server
+  const agentmailKey = readEnvFile(['AGENTMAIL_API_KEY']).AGENTMAIL_API_KEY;
+  if (agentmailKey) {
+    args.push('-e', `AGENTMAIL_API_KEY=${agentmailKey}`);
+  }
 
   // OneCLI gateway handles credential injection — containers never see real secrets.
   // The gateway intercepts HTTPS traffic and injects API keys or OAuth tokens.
