@@ -3,6 +3,7 @@ import path from 'path';
 
 import { OneCLI } from '@onecli-sh/sdk';
 
+import { startAgentmailBridge } from './agentmail-bridge.js';
 import {
   ASSISTANT_NAME,
   DEFAULT_TRIGGER,
@@ -674,6 +675,7 @@ async function main(): Promise<void> {
   }
 
   // Start subsystems (independently of connection handler)
+  startAgentmailBridge({ storeMessage, storeChatMetadata });
   startSchedulerLoop({
     registeredGroups: () => registeredGroups,
     getSessions: () => sessions,
