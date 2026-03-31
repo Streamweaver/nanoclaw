@@ -42,15 +42,18 @@ async function sendTelegramMessage(
 }
 
 export class TelegramChannel implements Channel {
-  name = 'telegram';
+  name: string;
 
   private bot: Bot | null = null;
   private opts: TelegramChannelOpts;
   private botToken: string;
+  private botName: string;
 
-  constructor(botToken: string, opts: TelegramChannelOpts) {
+  constructor(botToken: string, botName: string, opts: TelegramChannelOpts) {
     this.botToken = botToken;
+    this.botName = botName;
     this.opts = opts;
+    this.name = botName === 'default' ? 'telegram' : `telegram-${botName}`;
   }
 
   async connect(): Promise<void> {
@@ -69,8 +72,11 @@ export class TelegramChannel implements Channel {
           ? ctx.from?.first_name || 'Private'
           : (ctx.chat as any).title || 'Unknown';
 
+      const chatJid = this.botName === 'default'
+        ? `tg:${chatId}`
+        : `tg:${this.botName}:${chatId}`;
       ctx.reply(
-        `Chat ID: \`tg:${chatId}\`\nName: ${chatName}\nType: ${chatType}`,
+        `Chat ID: \`${chatJid}\`\nName: ${chatName}\nType: ${chatType}`,
         { parse_mode: 'Markdown' },
       );
     });
@@ -90,7 +96,9 @@ export class TelegramChannel implements Channel {
         if (TELEGRAM_BOT_COMMANDS.has(cmd)) return;
       }
 
-      const chatJid = `tg:${ctx.chat.id}`;
+      const chatJid = this.botName === 'default'
+        ? `tg:${ctx.chat.id}`
+        : `tg:${this.botName}:${ctx.chat.id}`;
       let content = ctx.message.text;
       const timestamp = new Date(ctx.message.date * 1000).toISOString();
       const senderName =
@@ -169,7 +177,9 @@ export class TelegramChannel implements Channel {
 
     // Handle non-text messages with placeholders so the agent knows something was sent
     const storeNonText = (ctx: any, placeholder: string) => {
-      const chatJid = `tg:${ctx.chat.id}`;
+      const chatJid = this.botName === 'default'
+        ? `tg:${ctx.chat.id}`
+        : `tg:${this.botName}:${ctx.chat.id}`;
       const group = this.opts.registeredGroups()[chatJid];
       if (!group) return;
 
@@ -250,7 +260,7 @@ export class TelegramChannel implements Channel {
     }
 
     try {
-      const numericId = jid.replace(/^tg:/, '');
+      const numericId = jid.replace(/^tg:(?:[^:]+:)?/, '');
       const options = threadId
         ? { message_thread_id: parseInt(threadId, 10) }
         : {};
@@ -283,7 +293,10 @@ export class TelegramChannel implements Channel {
   }
 
   ownsJid(jid: string): boolean {
-    return jid.startsWith('tg:');
+    if (this.botName === 'default') {
+      return jid.startsWith('tg:');
+    }
+    return jid.startsWith(`tg:${this.botName}:`);
   }
 
   async disconnect(): Promise<void> {
@@ -297,7 +310,7 @@ export class TelegramChannel implements Channel {
   async setTyping(jid: string, isTyping: boolean): Promise<void> {
     if (!this.bot || !isTyping) return;
     try {
-      const numericId = jid.replace(/^tg:/, '');
+      const numericId = jid.replace(/^tg:(?:[^:]+:)?/, '');
       await this.bot.api.sendChatAction(numericId, 'typing');
     } catch (err) {
       logger.debug({ jid, err }, 'Failed to send Telegram typing indicator');
@@ -305,13 +318,30 @@ export class TelegramChannel implements Channel {
   }
 }
 
-registerChannel('telegram', (opts: ChannelOpts) => {
-  const envVars = readEnvFile(['TELEGRAM_BOT_TOKEN']);
-  const token =
-    process.env.TELEGRAM_BOT_TOKEN || envVars.TELEGRAM_BOT_TOKEN || '';
-  if (!token) {
-    logger.warn('Telegram: TELEGRAM_BOT_TOKEN not set');
-    return null;
+// Multi-bot: TELEGRAM_BOTS JSON array, or single TELEGRAM_BOT_TOKEN (backward compat)
+const envVars = readEnvFile(['TELEGRAM_BOT_TOKEN', 'TELEGRAM_BOTS']);
+const botsJson = process.env.TELEGRAM_BOTS || envVars.TELEGRAM_BOTS || '';
+
+if (botsJson) {
+  try {
+    const bots = JSON.parse(botsJson) as Array<{ name: string; token: string }>;
+    for (const bot of bots) {
+      if (!bot.name || !bot.token) continue;
+      registerChannel(`telegram-${bot.name}`, (opts: ChannelOpts) => {
+        return new TelegramChannel(bot.token, bot.name, opts);
+      });
+    }
+  } catch (err) {
+    logger.error({ err }, 'Failed to parse TELEGRAM_BOTS JSON config');
   }
-  return new TelegramChannel(token, opts);
-});
+} else {
+  // Single-bot fallback (backward compatible)
+  registerChannel('telegram', (opts: ChannelOpts) => {
+    const token =
+      process.env.TELEGRAM_BOT_TOKEN || envVars.TELEGRAM_BOT_TOKEN || '';
+    if (!token) {
+      return null;
+    }
+    return new TelegramChannel(token, 'default', opts);
+  });
+}
