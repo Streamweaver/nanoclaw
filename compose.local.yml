@@ -1,43 +1,6 @@
 name: nanocore
 
 services:
-  onecli-postgres:
-    image: postgres:18-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-onecli}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-onecli}
-      POSTGRES_DB: ${POSTGRES_DB:-onecli}
-    volumes:
-      - onecli_pgdata:/var/lib/postgresql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-onecli}"]
-      interval: 5s
-      timeout: 3s
-      start_period: 15s
-      retries: 10
-    networks:
-      - nanoclaw
-
-  onecli:
-    image: ghcr.io/onecli/onecli:latest
-    restart: unless-stopped
-    depends_on:
-      onecli-postgres:
-        condition: service_healthy
-    ports:
-      - "10254:10254"
-      - "10255:10255"
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-onecli}:${POSTGRES_PASSWORD:-onecli}@onecli-postgres:5432/${POSTGRES_DB:-onecli}
-    volumes:
-      - onecli_app-data:/app/data
-    env_file:
-      - path: .env
-        required: false
-    networks:
-      - nanoclaw
-
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
@@ -46,12 +9,6 @@ services:
       - ${HOME}/.cloudflared:/home/nonroot/.cloudflared:ro
     networks:
       - nanoclaw
-
-volumes:
-  onecli_pgdata:
-    external: true
-  onecli_app-data:
-    external: true
 
 networks:
   nanoclaw:
