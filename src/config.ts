@@ -114,9 +114,7 @@ export const AGENTMAIL_WEBHOOK_SECRET =
   '';
 export const AGENTMAIL_INBOX_MAP: Record<string, string> = (() => {
   const raw =
-    process.env.AGENTMAIL_INBOX_MAP ||
-    agentmailEnv.AGENTMAIL_INBOX_MAP ||
-    '{}';
+    process.env.AGENTMAIL_INBOX_MAP || agentmailEnv.AGENTMAIL_INBOX_MAP || '{}';
   try {
     return JSON.parse(raw);
   } catch {

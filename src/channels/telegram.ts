@@ -334,7 +334,10 @@ if (botsJson) {
     for (const bot of bots) {
       if (!bot.name || !bot.token || bot.name.includes(':')) {
         if (bot.name?.includes(':')) {
-          logger.warn({ name: bot.name }, 'Telegram bot name contains ":" — skipping');
+          logger.warn(
+            { name: bot.name },
+            'Telegram bot name contains ":" — skipping',
+          );
         }
         continue;
       }

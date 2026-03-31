@@ -60,6 +60,7 @@ groups/telegram_techtavern/email_drafts/*
 # Secrets
 *.keys.json
 .env
+agent-names.md
 
 # Temp files
 .tmp-*

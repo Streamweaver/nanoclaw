@@ -153,7 +153,10 @@ export function startAgentmailBridge(deps: BridgeDeps): http.Server | null {
     }
 
     // Webhook endpoint
-    if (req.method === 'POST' && (req.url === '/ingest/agentmail' || req.url === '/agentmail/webhook')) {
+    if (
+      req.method === 'POST' &&
+      (req.url === '/ingest/agentmail' || req.url === '/agentmail/webhook')
+    ) {
       let body: string;
       try {
         body = await collectBody(req);
