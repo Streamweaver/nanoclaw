@@ -74,8 +74,8 @@ The compose project is named `nanocore` so infrastructure containers (`nanocore-
 
 ## Contexts (Groups)
 
-| Context | Telegram Bot | Agentmail Address | JID | Role |
-|---------|--------------|-------------------|-----|------|
-| Personal | @WreckingCrewAssistantBot | richminute924@agentmail.to | tg:newton:8580174170 | Main |
-| Optional Rule Games | @OptionalRuleAssistantBot | vivaciouslocation34@agentmail.to | tg:alcuin:8580174170 | Non-main |
-| Tech Tavern | @TechTavernAssistantBot | friendlyadvice566@agentmail.to | tg:turing:8580174170 | Non-main |
+| Context | Folder | Assistant | Telegram Bot | Agentmail Address | JID | Role |
+|---------|--------|-----------|--------------|-------------------|-----|------|
+| Personal | `personal` | Newton | @WreckingCrewAssistantBot | richminute924@agentmail.to | tg:newton:8580174170 | Main |
+| Optional Rule Games | `optionalrule` | Alcuin | @OptionalRuleAssistantBot | vivaciouslocation34@agentmail.to | tg:alcuin:8580174170 | Non-main |
+| Tech Tavern | `techtavern` | Turing | @TechTavernAssistantBot | friendlyadvice566@agentmail.to | tg:turing:8580174170 | Non-main |

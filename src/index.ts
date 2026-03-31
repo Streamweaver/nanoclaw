@@ -98,7 +98,10 @@ function applyGroupConfigs(): void {
     try {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
       let changed = false;
-      if (config.assistantName && config.assistantName !== group.assistantName) {
+      if (
+        config.assistantName &&
+        config.assistantName !== group.assistantName
+      ) {
         group.assistantName = config.assistantName;
         changed = true;
       }
@@ -110,10 +113,7 @@ function applyGroupConfigs(): void {
         );
       }
     } catch (err) {
-      logger.warn(
-        { folder: group.folder, err },
-        'Failed to read group.json',
-      );
+      logger.warn({ folder: group.folder, err }, 'Failed to read group.json');
     }
   }
 }
