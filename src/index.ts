@@ -83,6 +83,41 @@ function groupAssistantName(group: RegisteredGroup): string {
 const channels: Channel[] = [];
 const queue = new GroupQueue();
 
+/**
+ * Read per-group config from groups/<folder>/group.json.
+ * Applies assistantName (and future per-group settings) to registered groups,
+ * persisting changes back to the DB so the value is available everywhere.
+ */
+function applyGroupConfigs(): void {
+  for (const [jid, group] of Object.entries(registeredGroups)) {
+    const configPath = path.join(
+      resolveGroupFolderPath(group.folder),
+      'group.json',
+    );
+    if (!fs.existsSync(configPath)) continue;
+    try {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      let changed = false;
+      if (config.assistantName && config.assistantName !== group.assistantName) {
+        group.assistantName = config.assistantName;
+        changed = true;
+      }
+      if (changed) {
+        setRegisteredGroup(jid, group);
+        logger.info(
+          { folder: group.folder, assistantName: group.assistantName },
+          'Applied group config',
+        );
+      }
+    } catch (err) {
+      logger.warn(
+        { folder: group.folder, err },
+        'Failed to read group.json',
+      );
+    }
+  }
+}
+
 function loadState(): void {
   lastTimestamp = getRouterState('last_timestamp') || '';
   const agentTs = getRouterState('last_agent_timestamp');
@@ -94,6 +129,7 @@ function loadState(): void {
   }
   sessions = getAllSessions();
   registeredGroups = getAllRegisteredGroups();
+  applyGroupConfigs();
   logger.info(
     { groupCount: Object.keys(registeredGroups).length },
     'State loaded',
