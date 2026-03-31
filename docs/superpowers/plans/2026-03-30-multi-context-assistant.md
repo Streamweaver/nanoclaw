@@ -61,23 +61,39 @@ Create weekly scheduled research tasks for each group. Each task spawns a fresh 
 - [ ] Message Turing (Tech Tavern): "Schedule a weekly technology and AI research digest every Tuesday at 8am. Research AI developments, business tech trends, and consulting insights. Apply CRAAP criteria with extra scrutiny on AI claims. Save the report to research/ and send me a summary with actionable insights. Use schedule_task with cron `0 8 * * 2` and context_mode `isolated`."
 - [ ] Verify tasks created: ask each bot "List my scheduled tasks"
 
-### Task 12: Cloud VM Deployment
+### Task 12: Docker Compose for Supporting Services
+
+**Priority:** High
+**Effort:** Small
+
+Unify OneCLI (+ Postgres) and cloudflared under a single `docker-compose.yml` at the project root. NanoClaw stays native (see ADR-002 in `docs/local/decisions.md`).
+
+**Steps:**
+- [ ] Create `docker-compose.yml` at project root with OneCLI, Postgres, and cloudflared services
+- [ ] Migrate OneCLI config from `~/.onecli/docker-compose.yml` to project compose
+- [ ] Add cloudflared service using `~/.cloudflared/` credentials
+- [ ] Test `docker compose up -d` starts all infrastructure
+- [ ] Test `npm run dev` works alongside compose services
+- [ ] Test `docker compose down` tears down cleanly
+- [ ] Update `docs/local/deployment.md` with final instructions
+
+### Task 14: Cloud VM Deployment
 
 **Priority:** Low (when ready for persistent hosting)
 **Effort:** Medium
 
-Deploy NanoClaw to a cloud VM for always-on operation. Currently running via `npm run dev` on WSL, which doesn't support systemd services.
+Deploy NanoClaw to a cloud VM for always-on operation. See `docs/local/deployment.md` for target architecture.
 
 **Steps:**
 - [ ] Provision a small Ubuntu VPS (e.g., DigitalOcean, Hetzner, Linode — $5-10/month)
-- [ ] Install Docker + Node.js 22
-- [ ] Clone repo, checkout `feat/multi-context-assistant` (or merge to main first)
-- [ ] Copy `.env` with credentials
+- [ ] Install Docker + Docker Compose + Node.js 22
+- [ ] Clone repo, checkout `deploy/develop` (or `deploy/main` when ready)
+- [ ] Copy `.env` and `~/.cloudflared/` credentials
 - [ ] `npm install && npm run build && ./container/build.sh`
 - [ ] Run `/init-onecli` to set up credential vault
 - [ ] Register Anthropic token in OneCLI
-- [ ] Set up cloudflared tunnel as systemd service
-- [ ] Set up NanoClaw as systemd service (auto-start, auto-restart)
+- [ ] Create systemd unit for `docker compose up` (OneCLI + cloudflared)
+- [ ] Create systemd unit for NanoClaw (depends on infra)
 - [ ] Re-register groups (or copy `store/messages.db`)
 - [ ] Verify all 3 bots respond, email flows, scheduled tasks fire
 
@@ -136,7 +152,7 @@ Deploy NanoClaw to a cloud VM for always-on operation. Currently running via `np
 
 | Component | Detail |
 |-----------|--------|
-| Cloudflared tunnel | `wrecking-crew` → hooks.flagonwiththedragon.com → localhost:8800 |
+| Cloudflared tunnel | `nanoclaw` → hooks.flagonwiththedragon.com → localhost:8800 |
 | Agentmail webhook | `ep_3BgwzY2E78TtNnVPsTNJqxuIeJi` |
 | OneCLI | Running on localhost:10254, Anthropic secret registered |
 | Container image | `nanoclaw-agent:latest` with agentmail-mcp |
