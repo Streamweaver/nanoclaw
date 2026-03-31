@@ -72,9 +72,10 @@ export class TelegramChannel implements Channel {
           ? ctx.from?.first_name || 'Private'
           : (ctx.chat as any).title || 'Unknown';
 
-      const chatJid = this.botName === 'default'
-        ? `tg:${chatId}`
-        : `tg:${this.botName}:${chatId}`;
+      const chatJid =
+        this.botName === 'default'
+          ? `tg:${chatId}`
+          : `tg:${this.botName}:${chatId}`;
       ctx.reply(
         `Chat ID: \`${chatJid}\`\nName: ${chatName}\nType: ${chatType}`,
         { parse_mode: 'Markdown' },
@@ -96,9 +97,10 @@ export class TelegramChannel implements Channel {
         if (TELEGRAM_BOT_COMMANDS.has(cmd)) return;
       }
 
-      const chatJid = this.botName === 'default'
-        ? `tg:${ctx.chat.id}`
-        : `tg:${this.botName}:${ctx.chat.id}`;
+      const chatJid =
+        this.botName === 'default'
+          ? `tg:${ctx.chat.id}`
+          : `tg:${this.botName}:${ctx.chat.id}`;
       let content = ctx.message.text;
       const timestamp = new Date(ctx.message.date * 1000).toISOString();
       const senderName =
@@ -177,9 +179,10 @@ export class TelegramChannel implements Channel {
 
     // Handle non-text messages with placeholders so the agent knows something was sent
     const storeNonText = (ctx: any, placeholder: string) => {
-      const chatJid = this.botName === 'default'
-        ? `tg:${ctx.chat.id}`
-        : `tg:${this.botName}:${ctx.chat.id}`;
+      const chatJid =
+        this.botName === 'default'
+          ? `tg:${ctx.chat.id}`
+          : `tg:${this.botName}:${ctx.chat.id}`;
       const group = this.opts.registeredGroups()[chatJid];
       if (!group) return;
 
@@ -293,6 +296,9 @@ export class TelegramChannel implements Channel {
   }
 
   ownsJid(jid: string): boolean {
+    // In 'default' mode (single TELEGRAM_BOT_TOKEN), this matches all tg: JIDs.
+    // This is safe because default mode and named-bot mode (TELEGRAM_BOTS) are
+    // mutually exclusive — only one registration path runs at module load.
     if (this.botName === 'default') {
       return jid.startsWith('tg:');
     }
@@ -326,7 +332,12 @@ if (botsJson) {
   try {
     const bots = JSON.parse(botsJson) as Array<{ name: string; token: string }>;
     for (const bot of bots) {
-      if (!bot.name || !bot.token) continue;
+      if (!bot.name || !bot.token || bot.name.includes(':')) {
+        if (bot.name?.includes(':')) {
+          logger.warn({ name: bot.name }, 'Telegram bot name contains ":" — skipping');
+        }
+        continue;
+      }
       registerChannel(`telegram-${bot.name}`, (opts: ChannelOpts) => {
         return new TelegramChannel(bot.token, bot.name, opts);
       });

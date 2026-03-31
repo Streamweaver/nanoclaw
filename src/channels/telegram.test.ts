@@ -805,27 +805,47 @@ describe('TelegramChannel', () => {
 
   describe('ownsJid', () => {
     it('owns tg: JIDs', () => {
-      const channel = new TelegramChannel('test-token', 'default', createTestOpts());
+      const channel = new TelegramChannel(
+        'test-token',
+        'default',
+        createTestOpts(),
+      );
       expect(channel.ownsJid('tg:123456')).toBe(true);
     });
 
     it('owns tg: JIDs with negative IDs (groups)', () => {
-      const channel = new TelegramChannel('test-token', 'default', createTestOpts());
+      const channel = new TelegramChannel(
+        'test-token',
+        'default',
+        createTestOpts(),
+      );
       expect(channel.ownsJid('tg:-1001234567890')).toBe(true);
     });
 
     it('does not own WhatsApp group JIDs', () => {
-      const channel = new TelegramChannel('test-token', 'default', createTestOpts());
+      const channel = new TelegramChannel(
+        'test-token',
+        'default',
+        createTestOpts(),
+      );
       expect(channel.ownsJid('12345@g.us')).toBe(false);
     });
 
     it('does not own WhatsApp DM JIDs', () => {
-      const channel = new TelegramChannel('test-token', 'default', createTestOpts());
+      const channel = new TelegramChannel(
+        'test-token',
+        'default',
+        createTestOpts(),
+      );
       expect(channel.ownsJid('12345@s.whatsapp.net')).toBe(false);
     });
 
     it('does not own unknown JID formats', () => {
-      const channel = new TelegramChannel('test-token', 'default', createTestOpts());
+      const channel = new TelegramChannel(
+        'test-token',
+        'default',
+        createTestOpts(),
+      );
       expect(channel.ownsJid('random-string')).toBe(false);
     });
   });
@@ -942,8 +962,62 @@ describe('TelegramChannel', () => {
 
   describe('channel properties', () => {
     it('has name "telegram"', () => {
-      const channel = new TelegramChannel('test-token', 'default', createTestOpts());
+      const channel = new TelegramChannel(
+        'test-token',
+        'default',
+        createTestOpts(),
+      );
       expect(channel.name).toBe('telegram');
+    });
+  });
+
+  // --- Named bot (non-default) ---
+
+  describe('named bot (non-default)', () => {
+    it('produces channel.name === "telegram-personal"', () => {
+      const channel = new TelegramChannel(
+        'test-token',
+        'personal',
+        createTestOpts(),
+      );
+      expect(channel.name).toBe('telegram-personal');
+    });
+
+    it('ownsJid matches tg:personal:* but not tg:*', () => {
+      const channel = new TelegramChannel(
+        'test-token',
+        'personal',
+        createTestOpts(),
+      );
+      expect(channel.ownsJid('tg:personal:123')).toBe(true);
+      expect(channel.ownsJid('tg:123')).toBe(false);
+    });
+
+    it('sendMessage correctly extracts the numeric ID from named JID', async () => {
+      const opts = createTestOpts();
+      const channel = new TelegramChannel('test-token', 'personal', opts);
+      await channel.connect();
+
+      await channel.sendMessage('tg:personal:123', 'Hello named bot');
+
+      expect(currentBot().api.sendMessage).toHaveBeenCalledWith(
+        '123',
+        'Hello named bot',
+        { parse_mode: 'Markdown' },
+      );
+    });
+
+    it('setTyping correctly extracts the numeric ID from named JID', async () => {
+      const opts = createTestOpts();
+      const channel = new TelegramChannel('test-token', 'personal', opts);
+      await channel.connect();
+
+      await channel.setTyping('tg:personal:123', true);
+
+      expect(currentBot().api.sendChatAction).toHaveBeenCalledWith(
+        '123',
+        'typing',
+      );
     });
   });
 });
