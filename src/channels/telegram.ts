@@ -1,7 +1,7 @@
 import https from 'https';
 import { Api, Bot } from 'grammy';
 
-import { ASSISTANT_NAME, TRIGGER_PATTERN } from '../config.js';
+import { ASSISTANT_NAME, getTriggerPattern } from '../config.js';
 import { readEnvFile } from '../env.js';
 import { logger } from '../logger.js';
 import { registerChannel, ChannelOpts } from './registry.js';
@@ -84,7 +84,13 @@ export class TelegramChannel implements Channel {
 
     // Command to check bot status
     this.bot.command('ping', (ctx) => {
-      ctx.reply(`${ASSISTANT_NAME} is online.`);
+      const chatJid =
+        this.botName === 'default'
+          ? `tg:${ctx.chat.id}`
+          : `tg:${this.botName}:${ctx.chat.id}`;
+      const group = this.opts.registeredGroups()[chatJid];
+      const name = group?.assistantName || ASSISTANT_NAME;
+      ctx.reply(`${name} is online.`);
     });
 
     // Telegram bot commands handled above — skip them in the general handler
@@ -118,9 +124,9 @@ export class TelegramChannel implements Channel {
           ? senderName
           : (ctx.chat as any).title || chatJid;
 
-      // Translate Telegram @bot_username mentions into TRIGGER_PATTERN format.
-      // Telegram @mentions (e.g., @andy_ai_bot) won't match TRIGGER_PATTERN
-      // (e.g., ^@Andy\b), so we prepend the trigger when the bot is @mentioned.
+      // Translate Telegram @bot_username mentions into the group's trigger format.
+      // Telegram @mentions (e.g., @andy_ai_bot) won't match the trigger pattern
+      // (e.g., ^@Newton\b), so we prepend the trigger when the bot is @mentioned.
       const botUsername = ctx.me?.username?.toLowerCase();
       if (botUsername) {
         const entities = ctx.message.entities || [];
@@ -133,8 +139,13 @@ export class TelegramChannel implements Channel {
           }
           return false;
         });
-        if (isBotMentioned && !TRIGGER_PATTERN.test(content)) {
-          content = `@${ASSISTANT_NAME} ${content}`;
+        if (isBotMentioned) {
+          const group = this.opts.registeredGroups()[chatJid];
+          const name = group?.assistantName || ASSISTANT_NAME;
+          const triggerPattern = getTriggerPattern(group?.trigger);
+          if (!triggerPattern.test(content)) {
+            content = `@${name} ${content}`;
+          }
         }
       }
 

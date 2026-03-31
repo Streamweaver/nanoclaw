@@ -75,6 +75,11 @@ let registeredGroups: Record<string, RegisteredGroup> = {};
 let lastAgentTimestamp: Record<string, string> = {};
 let messageLoopRunning = false;
 
+/** Resolve the effective assistant name for a group (per-group or global fallback). */
+function groupAssistantName(group: RegisteredGroup): string {
+  return group.assistantName || ASSISTANT_NAME;
+}
+
 const channels: Channel[] = [];
 const queue = new GroupQueue();
 
@@ -99,11 +104,11 @@ function loadState(): void {
  * Return the message cursor for a group, recovering from the last bot reply
  * if lastAgentTimestamp is missing (new group, corrupted state, restart).
  */
-function getOrRecoverCursor(chatJid: string): string {
+function getOrRecoverCursor(chatJid: string, botPrefix: string): string {
   const existing = lastAgentTimestamp[chatJid];
   if (existing) return existing;
 
-  const botTs = getLastBotMessageTimestamp(chatJid, ASSISTANT_NAME);
+  const botTs = getLastBotMessageTimestamp(chatJid, botPrefix);
   if (botTs) {
     logger.info(
       { chatJid, recoveredFrom: botTs },
@@ -150,9 +155,10 @@ function registerGroup(jid: string, group: RegisteredGroup): void {
     );
     if (fs.existsSync(templateFile)) {
       let content = fs.readFileSync(templateFile, 'utf-8');
-      if (ASSISTANT_NAME !== 'Andy') {
-        content = content.replace(/^# Andy$/m, `# ${ASSISTANT_NAME}`);
-        content = content.replace(/You are Andy/g, `You are ${ASSISTANT_NAME}`);
+      const name = groupAssistantName(group);
+      if (name !== 'Andy') {
+        content = content.replace(/^# Andy$/m, `# ${name}`);
+        content = content.replace(/You are Andy/g, `You are ${name}`);
       }
       fs.writeFileSync(groupMdFile, content);
       logger.info({ folder: group.folder }, 'Created CLAUDE.md from template');
@@ -205,11 +211,12 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
   }
 
   const isMainGroup = group.isMain === true;
+  const botName = groupAssistantName(group);
 
   const missedMessages = getMessagesSince(
     chatJid,
-    getOrRecoverCursor(chatJid),
-    ASSISTANT_NAME,
+    getOrRecoverCursor(chatJid, botName),
+    botName,
     MAX_MESSAGES_PER_PROMPT,
   );
 
@@ -367,7 +374,7 @@ async function runAgent(
         groupFolder: group.folder,
         chatJid,
         isMain,
-        assistantName: ASSISTANT_NAME,
+        assistantName: groupAssistantName(group),
       },
       (proc, containerName) =>
         queue.registerProcess(chatJid, proc, containerName, group.folder),
@@ -480,10 +487,11 @@ async function startMessageLoop(): Promise<void> {
 
           // Pull all messages since lastAgentTimestamp so non-trigger
           // context that accumulated between triggers is included.
+          const botName = groupAssistantName(group);
           const allPending = getMessagesSince(
             chatJid,
-            getOrRecoverCursor(chatJid),
-            ASSISTANT_NAME,
+            getOrRecoverCursor(chatJid, botName),
+            botName,
             MAX_MESSAGES_PER_PROMPT,
           );
           const messagesToSend =
@@ -523,10 +531,11 @@ async function startMessageLoop(): Promise<void> {
  */
 function recoverPendingMessages(): void {
   for (const [chatJid, group] of Object.entries(registeredGroups)) {
+    const botName = groupAssistantName(group);
     const pending = getMessagesSince(
       chatJid,
-      getOrRecoverCursor(chatJid),
-      ASSISTANT_NAME,
+      getOrRecoverCursor(chatJid, botName),
+      botName,
       MAX_MESSAGES_PER_PROMPT,
     );
     if (pending.length > 0) {

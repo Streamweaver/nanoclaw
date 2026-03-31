@@ -11,7 +11,11 @@ vi.mock('../env.js', () => ({ readEnvFile: vi.fn(() => ({})) }));
 // Mock config
 vi.mock('../config.js', () => ({
   ASSISTANT_NAME: 'Andy',
-  TRIGGER_PATTERN: /^@Andy\b/i,
+  getTriggerPattern: (trigger?: string) => {
+    const t = trigger?.trim() || '@Andy';
+    const escaped = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`^${escaped}\\b`, 'i');
+  },
 }));
 
 // Mock logger
@@ -944,13 +948,36 @@ describe('TelegramChannel', () => {
       );
     });
 
-    it('/ping replies with bot status', async () => {
+    it('/ping replies with bot status using per-group name', async () => {
+      const opts = createTestOpts({
+        registeredGroups: vi.fn(() => ({
+          'tg:100200300': {
+            name: 'Test Group',
+            folder: 'test-group',
+            trigger: '@Newton',
+            added_at: '2024-01-01T00:00:00.000Z',
+            assistantName: 'Newton',
+          },
+        })),
+      });
+      const channel = new TelegramChannel('test-token', 'default', opts);
+      await channel.connect();
+
+      const handler = currentBot().commandHandlers.get('ping')!;
+      const ctx = { chat: { id: 100200300 }, reply: vi.fn() };
+
+      await handler(ctx);
+
+      expect(ctx.reply).toHaveBeenCalledWith('Newton is online.');
+    });
+
+    it('/ping falls back to global name for unregistered chats', async () => {
       const opts = createTestOpts();
       const channel = new TelegramChannel('test-token', 'default', opts);
       await channel.connect();
 
       const handler = currentBot().commandHandlers.get('ping')!;
-      const ctx = { reply: vi.fn() };
+      const ctx = { chat: { id: 999999 }, reply: vi.fn() };
 
       await handler(ctx);
 
