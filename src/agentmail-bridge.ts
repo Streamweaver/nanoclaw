@@ -56,15 +56,18 @@ function processInboundEmail(
   payload: Record<string, unknown>,
   deps: BridgeDeps,
 ): void {
-  const data = payload.data as Record<string, unknown> | undefined;
+  const data = (payload.message ?? payload.data) as
+    | Record<string, unknown>
+    | undefined;
   if (!data) {
-    logger.warn('Agentmail webhook missing data field');
+    logger.warn('Agentmail webhook missing message/data field');
     return;
   }
 
+  const inboxId = String(data.inbox_id ?? data.to ?? '');
   const email: EmailData = {
     from: String(data.from ?? ''),
-    to: String(data.to ?? ''),
+    to: inboxId,
     messageId: String(data.message_id ?? ''),
     threadId: String(data.thread_id ?? ''),
     subject: data.subject ? String(data.subject) : undefined,
@@ -72,7 +75,7 @@ function processInboundEmail(
     html: data.html ? String(data.html) : undefined,
   };
 
-  const groupJid = resolveGroupJid(email.to, AGENTMAIL_INBOX_MAP);
+  const groupJid = resolveGroupJid(inboxId, AGENTMAIL_INBOX_MAP);
   if (!groupJid) {
     logger.warn(
       { to: email.to },
@@ -107,7 +110,10 @@ function processInboundEmail(
 
 // --- HTTP server ---
 
-function collectBody(req: http.IncomingMessage, maxBytes = 1_048_576): Promise<string> {
+function collectBody(
+  req: http.IncomingMessage,
+  maxBytes = 1_048_576,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
@@ -125,9 +131,7 @@ function collectBody(req: http.IncomingMessage, maxBytes = 1_048_576): Promise<s
   });
 }
 
-export function startAgentmailBridge(
-  deps: BridgeDeps,
-): http.Server | null {
+export function startAgentmailBridge(deps: BridgeDeps): http.Server | null {
   if (!AGENTMAIL_WEBHOOK_SECRET) {
     logger.info('Agentmail bridge: no webhook secret configured, skipping');
     return null;
@@ -149,7 +153,7 @@ export function startAgentmailBridge(
     }
 
     // Webhook endpoint
-    if (req.method === 'POST' && req.url === '/agentmail/webhook') {
+    if (req.method === 'POST' && (req.url === '/ingest/agentmail' || req.url === '/agentmail/webhook')) {
       let body: string;
       try {
         body = await collectBody(req);
@@ -181,6 +185,7 @@ export function startAgentmailBridge(
 
       // Only process message.received events
       const eventType =
+        (payload.event_type as string) ||
         (req.headers['svix-event-type'] as string) ||
         (payload.type as string) ||
         '';
