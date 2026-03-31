@@ -79,3 +79,56 @@ The compose project is named `nanocore` so infrastructure containers (`nanocore-
 | Personal | `personal` | Newton | @WreckingCrewAssistantBot | richminute924@agentmail.to | tg:newton:8580174170 | Main |
 | Optional Rule Games | `optionalrule` | Alcuin | @OptionalRuleAssistantBot | vivaciouslocation34@agentmail.to | tg:alcuin:8580174170 | Non-main |
 | Tech Tavern | `techtavern` | Turing | @TechTavernAssistantBot | friendlyadvice566@agentmail.to | tg:turing:8580174170 | Non-main |
+
+## Per-Group Configuration
+
+Each group folder can contain a `group.json` for per-group settings:
+
+```json
+{ "assistantName": "Newton" }
+```
+
+NanoClaw reads these on startup and syncs to the DB. Edit the file and restart to apply.
+
+| Group | File | Assistant Name |
+|-------|------|---------------|
+| Personal | `groups/personal/group.json` | Newton |
+| Optional Rule Games | `groups/optionalrule/group.json` | Alcuin |
+| Tech Tavern | `groups/techtavern/group.json` | Turing |
+
+## Sender Allowlist
+
+Controls who can interact with the bots. Config file: `~/.config/nanoclaw/sender-allowlist.json`
+
+Current config restricts all bots to Scott only (Telegram user ID `8580174170`). Messages from anyone else are silently dropped. The config is read on each message — no restart needed.
+
+Two modes per chat:
+- **`drop`** — messages from non-allowed senders are silently discarded (never stored)
+- **`trigger`** — messages are stored but only allowed senders can trigger the bot
+
+To allow additional users in a specific chat, add a per-chat override:
+
+```json
+{
+  "default": { "allow": ["8580174170"], "mode": "drop" },
+  "chats": {
+    "tg:alcuin:8580174170": { "allow": ["8580174170", "OTHER_USER_ID"], "mode": "drop" }
+  },
+  "logDenied": true
+}
+```
+
+## Operations (Makefile)
+
+All operations go through `make`:
+
+| Command | What it does |
+|---------|-------------|
+| `make up` | Start infra + NanoClaw (foreground) |
+| `make down` | Stop NanoClaw + agents + infra |
+| `make stop` | Stop NanoClaw + agents (leave infra running) |
+| `make restart` | Full restart |
+| `make status` | Show all components |
+| `make kill-agents` | Stop orphaned agent containers |
+| `make build` | Rebuild agent container image |
+| `make logs` | Tail logs |
