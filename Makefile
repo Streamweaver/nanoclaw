@@ -6,11 +6,10 @@ COMPOSE_FILE := compose.local.yml
 up: infra
 	npm run dev
 
-## Start infrastructure only (OneCLI + cloudflared)
+## Start infrastructure (cloudflared tunnel)
 infra:
 	docker compose -f $(COMPOSE_FILE) up -d
-	@echo "Waiting for OneCLI to be healthy..."
-	@docker compose -f $(COMPOSE_FILE) exec onecli-postgres pg_isready -U onecli -q && echo "Infrastructure ready."
+	@echo "Infrastructure ready."
 
 ## Stop infrastructure containers
 down:

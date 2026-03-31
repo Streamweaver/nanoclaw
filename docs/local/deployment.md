@@ -2,25 +2,25 @@
 
 ## Development (Local / WSL2)
 
-### Start supporting services
+### Start everything
 ```bash
-docker compose -f docker-compose.yml up -d
+make up          # starts infra in background, NanoClaw in foreground
 ```
 
-### Start NanoClaw
+### Other commands
 ```bash
-npm run dev
+make infra       # start infrastructure only (no NanoClaw)
+make down        # stop infrastructure containers
+make restart     # stop + start everything
+make logs        # tail infrastructure logs
+make status      # show container status
+make build       # rebuild agent container image
 ```
 
-### Stop everything
+### Manual startup (if needed)
 ```bash
-# Stop NanoClaw: Ctrl+C
-docker compose -f docker-compose.yml down
-```
-
-### Rebuild agent container (after Dockerfile or agent-runner changes)
-```bash
-./container/build.sh
+docker compose -f compose.local.yml up -d   # start infra
+npm run dev                                   # start NanoClaw
 ```
 
 ## Production (DigitalOcean Droplet)
@@ -29,16 +29,23 @@ Not yet deployed. Target setup:
 
 - Ubuntu VPS ($5-10/month)
 - Two systemd units:
-  1. `nanoclaw-infra.service` — runs `docker compose up` for OneCLI + cloudflared
+  1. `nanoclaw-infra.service` — runs `docker compose -f compose.local.yml up` for cloudflared
   2. `nanoclaw.service` — runs the NanoClaw Node.js process (depends on infra)
 - Auto-restart on failure, start on boot
+
+### Deployment steps
+1. Clone repo, checkout `deploy/develop` (or `deploy/main` when ready)
+2. Copy `.env` with credentials (including `CLAUDE_CODE_OAUTH_TOKEN`)
+3. Copy `~/.cloudflared/` with tunnel credentials (dir must be chmod 755, files 644)
+4. `npm install && npm run build && ./container/build.sh`
+5. Create systemd units
+6. Verify: `make up`, send test message on Telegram
 
 ### Prerequisites
 - Docker + Docker Compose
 - Node.js 22
 - `.env` with credentials
 - `~/.cloudflared/` with tunnel credentials
-- OneCLI configured with Anthropic API key
 
 ## Git Branching Strategy
 
