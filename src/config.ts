@@ -97,15 +97,28 @@ function resolveConfigTimezone(): string {
 export const TIMEZONE = resolveConfigTimezone();
 
 // --- Agentmail bridge ---
+const agentmailEnv = readEnvFile([
+  'AGENTMAIL_WEBHOOK_PORT',
+  'AGENTMAIL_WEBHOOK_SECRET',
+  'AGENTMAIL_INBOX_MAP',
+]);
 export const AGENTMAIL_WEBHOOK_PORT = parseInt(
-  process.env.AGENTMAIL_WEBHOOK_PORT || '8800',
+  process.env.AGENTMAIL_WEBHOOK_PORT ||
+    agentmailEnv.AGENTMAIL_WEBHOOK_PORT ||
+    '8800',
   10,
 );
 export const AGENTMAIL_WEBHOOK_SECRET =
-  process.env.AGENTMAIL_WEBHOOK_SECRET || '';
+  process.env.AGENTMAIL_WEBHOOK_SECRET ||
+  agentmailEnv.AGENTMAIL_WEBHOOK_SECRET ||
+  '';
 export const AGENTMAIL_INBOX_MAP: Record<string, string> = (() => {
+  const raw =
+    process.env.AGENTMAIL_INBOX_MAP ||
+    agentmailEnv.AGENTMAIL_INBOX_MAP ||
+    '{}';
   try {
-    return JSON.parse(process.env.AGENTMAIL_INBOX_MAP || '{}');
+    return JSON.parse(raw);
   } catch {
     return {};
   }
