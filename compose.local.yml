@@ -39,7 +39,7 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
-    command: tunnel run nanoclaw
+    command: tunnel --config /home/nonroot/.cloudflared/config.yml run nanoclaw
     volumes:
       - ${HOME}/.cloudflared:/home/nonroot/.cloudflared:ro
     networks:
