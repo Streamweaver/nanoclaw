@@ -391,7 +391,7 @@ async function runQuery(
     log(`Additional directories: ${extraDirs.join(', ')}`);
   }
 
-  const mcpServers: Record<string, object> = {
+  const mcpServers: Record<string, { command: string; args: string[]; env?: Record<string, string> }> = {
     nanoclaw: {
       command: 'node',
       args: [mcpServerPath],
