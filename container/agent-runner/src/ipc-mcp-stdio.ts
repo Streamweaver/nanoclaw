@@ -337,6 +337,58 @@ Use available_groups.json to find the JID for a group. The folder name must be c
   },
 );
 
+server.tool(
+  'get_task_runs',
+  'Get execution history for scheduled tasks. Shows when tasks ran, whether they succeeded or failed, duration, and result/error details. Use to check if a task ran, diagnose failures, or report status.',
+  {
+    task_id: z.string().optional().describe('Filter to a specific task ID. Omit to see all recent runs.'),
+    limit: z.number().optional().default(10).describe('Max number of runs to return (default 10).'),
+  },
+  async (args) => {
+    const logsFile = path.join(IPC_DIR, 'task_run_logs.json');
+
+    try {
+      if (!fs.existsSync(logsFile)) {
+        return { content: [{ type: 'text' as const, text: 'No task run history found.' }] };
+      }
+
+      const allRuns = JSON.parse(fs.readFileSync(logsFile, 'utf-8')) as Array<{
+        task_id: string;
+        run_at: string;
+        duration_ms: number;
+        status: string;
+        result: string | null;
+        error: string | null;
+      }>;
+
+      let runs = args.task_id
+        ? allRuns.filter((r) => r.task_id === args.task_id)
+        : allRuns;
+
+      const limit = args.limit ?? 10;
+      runs = runs.slice(0, limit);
+
+      if (runs.length === 0) {
+        return { content: [{ type: 'text' as const, text: args.task_id ? `No runs found for task ${args.task_id}.` : 'No task run history found.' }] };
+      }
+
+      const formatted = runs
+        .map((r) => {
+          const duration = r.duration_ms < 1000 ? `${r.duration_ms}ms` : `${(r.duration_ms / 1000).toFixed(1)}s`;
+          const detail = r.status === 'error' ? `Error: ${r.error}` : (r.result ? r.result.slice(0, 150) : 'No output');
+          return `- [${r.task_id}] ${r.run_at} (${duration}) ${r.status.toUpperCase()}\n  ${detail}`;
+        })
+        .join('\n');
+
+      return { content: [{ type: 'text' as const, text: `Task run history:\n${formatted}` }] };
+    } catch (err) {
+      return {
+        content: [{ type: 'text' as const, text: `Error reading run logs: ${err instanceof Error ? err.message : String(err)}` }],
+      };
+    }
+  },
+);
+
 // Start the stdio transport
 const transport = new StdioServerTransport();
 await server.connect(transport);
