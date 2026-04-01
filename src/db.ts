@@ -567,7 +567,8 @@ export function getTaskRunLogs(opts: {
     params.push(opts.groupFolder);
   }
 
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const where =
+    conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   params.push(limit);
 
   return db

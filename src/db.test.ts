@@ -594,8 +594,22 @@ describe('getTaskRunLogs', () => {
       created_at: '2026-03-31T00:00:00.000Z',
     });
 
-    logTaskRun({ task_id: 'task-1', run_at: '2026-03-30T09:00:00.000Z', duration_ms: 1000, status: 'success', result: 'first', error: null });
-    logTaskRun({ task_id: 'task-1', run_at: '2026-03-31T09:00:00.000Z', duration_ms: 2000, status: 'success', result: 'second', error: null });
+    logTaskRun({
+      task_id: 'task-1',
+      run_at: '2026-03-30T09:00:00.000Z',
+      duration_ms: 1000,
+      status: 'success',
+      result: 'first',
+      error: null,
+    });
+    logTaskRun({
+      task_id: 'task-1',
+      run_at: '2026-03-31T09:00:00.000Z',
+      duration_ms: 2000,
+      status: 'success',
+      result: 'second',
+      error: null,
+    });
 
     const runs = getTaskRunLogs({ taskId: 'task-1' });
     expect(runs.length).toBe(2);
@@ -604,11 +618,47 @@ describe('getTaskRunLogs', () => {
   });
 
   it('filters by group folder', () => {
-    createTask({ id: 'task-a', group_folder: 'personal', chat_jid: 'a@g.us', prompt: 'a', schedule_type: 'once', schedule_value: '2026-04-01T00:00:00.000Z', context_mode: 'isolated', next_run: '2026-04-01T00:00:00.000Z', status: 'active', created_at: '2026-03-31T00:00:00.000Z' });
-    createTask({ id: 'task-b', group_folder: 'optionalrule', chat_jid: 'b@g.us', prompt: 'b', schedule_type: 'once', schedule_value: '2026-04-01T00:00:00.000Z', context_mode: 'isolated', next_run: '2026-04-01T00:00:00.000Z', status: 'active', created_at: '2026-03-31T00:00:00.000Z' });
+    createTask({
+      id: 'task-a',
+      group_folder: 'personal',
+      chat_jid: 'a@g.us',
+      prompt: 'a',
+      schedule_type: 'once',
+      schedule_value: '2026-04-01T00:00:00.000Z',
+      context_mode: 'isolated',
+      next_run: '2026-04-01T00:00:00.000Z',
+      status: 'active',
+      created_at: '2026-03-31T00:00:00.000Z',
+    });
+    createTask({
+      id: 'task-b',
+      group_folder: 'optionalrule',
+      chat_jid: 'b@g.us',
+      prompt: 'b',
+      schedule_type: 'once',
+      schedule_value: '2026-04-01T00:00:00.000Z',
+      context_mode: 'isolated',
+      next_run: '2026-04-01T00:00:00.000Z',
+      status: 'active',
+      created_at: '2026-03-31T00:00:00.000Z',
+    });
 
-    logTaskRun({ task_id: 'task-a', run_at: '2026-03-31T09:00:00.000Z', duration_ms: 1000, status: 'success', result: 'a-result', error: null });
-    logTaskRun({ task_id: 'task-b', run_at: '2026-03-31T09:00:00.000Z', duration_ms: 1000, status: 'success', result: 'b-result', error: null });
+    logTaskRun({
+      task_id: 'task-a',
+      run_at: '2026-03-31T09:00:00.000Z',
+      duration_ms: 1000,
+      status: 'success',
+      result: 'a-result',
+      error: null,
+    });
+    logTaskRun({
+      task_id: 'task-b',
+      run_at: '2026-03-31T09:00:00.000Z',
+      duration_ms: 1000,
+      status: 'success',
+      result: 'b-result',
+      error: null,
+    });
 
     const runs = getTaskRunLogs({ groupFolder: 'personal' });
     expect(runs.length).toBe(1);
@@ -616,10 +666,28 @@ describe('getTaskRunLogs', () => {
   });
 
   it('respects limit parameter', () => {
-    createTask({ id: 'task-1', group_folder: 'personal', chat_jid: 'chat@g.us', prompt: 'test', schedule_type: 'cron', schedule_value: '0 9 * * *', context_mode: 'isolated', next_run: '2026-04-01T09:00:00.000Z', status: 'active', created_at: '2026-03-31T00:00:00.000Z' });
+    createTask({
+      id: 'task-1',
+      group_folder: 'personal',
+      chat_jid: 'chat@g.us',
+      prompt: 'test',
+      schedule_type: 'cron',
+      schedule_value: '0 9 * * *',
+      context_mode: 'isolated',
+      next_run: '2026-04-01T09:00:00.000Z',
+      status: 'active',
+      created_at: '2026-03-31T00:00:00.000Z',
+    });
 
     for (let i = 0; i < 15; i++) {
-      logTaskRun({ task_id: 'task-1', run_at: `2026-03-${String(i + 10).padStart(2, '0')}T09:00:00.000Z`, duration_ms: 1000, status: 'success', result: `run-${i}`, error: null });
+      logTaskRun({
+        task_id: 'task-1',
+        run_at: `2026-03-${String(i + 10).padStart(2, '0')}T09:00:00.000Z`,
+        duration_ms: 1000,
+        status: 'success',
+        result: `run-${i}`,
+        error: null,
+      });
     }
 
     const runs = getTaskRunLogs({ taskId: 'task-1', limit: 5 });
@@ -627,11 +695,47 @@ describe('getTaskRunLogs', () => {
   });
 
   it('returns all runs when no filters specified', () => {
-    createTask({ id: 'task-a', group_folder: 'personal', chat_jid: 'a@g.us', prompt: 'a', schedule_type: 'once', schedule_value: '2026-04-01T00:00:00.000Z', context_mode: 'isolated', next_run: '2026-04-01T00:00:00.000Z', status: 'active', created_at: '2026-03-31T00:00:00.000Z' });
-    createTask({ id: 'task-b', group_folder: 'optionalrule', chat_jid: 'b@g.us', prompt: 'b', schedule_type: 'once', schedule_value: '2026-04-01T00:00:00.000Z', context_mode: 'isolated', next_run: '2026-04-01T00:00:00.000Z', status: 'active', created_at: '2026-03-31T00:00:00.000Z' });
+    createTask({
+      id: 'task-a',
+      group_folder: 'personal',
+      chat_jid: 'a@g.us',
+      prompt: 'a',
+      schedule_type: 'once',
+      schedule_value: '2026-04-01T00:00:00.000Z',
+      context_mode: 'isolated',
+      next_run: '2026-04-01T00:00:00.000Z',
+      status: 'active',
+      created_at: '2026-03-31T00:00:00.000Z',
+    });
+    createTask({
+      id: 'task-b',
+      group_folder: 'optionalrule',
+      chat_jid: 'b@g.us',
+      prompt: 'b',
+      schedule_type: 'once',
+      schedule_value: '2026-04-01T00:00:00.000Z',
+      context_mode: 'isolated',
+      next_run: '2026-04-01T00:00:00.000Z',
+      status: 'active',
+      created_at: '2026-03-31T00:00:00.000Z',
+    });
 
-    logTaskRun({ task_id: 'task-a', run_at: '2026-03-31T09:00:00.000Z', duration_ms: 1000, status: 'success', result: 'a', error: null });
-    logTaskRun({ task_id: 'task-b', run_at: '2026-03-31T10:00:00.000Z', duration_ms: 1000, status: 'error', result: null, error: 'fail' });
+    logTaskRun({
+      task_id: 'task-a',
+      run_at: '2026-03-31T09:00:00.000Z',
+      duration_ms: 1000,
+      status: 'success',
+      result: 'a',
+      error: null,
+    });
+    logTaskRun({
+      task_id: 'task-b',
+      run_at: '2026-03-31T10:00:00.000Z',
+      duration_ms: 1000,
+      status: 'error',
+      result: null,
+      error: 'fail',
+    });
 
     const runs = getTaskRunLogs({});
     expect(runs.length).toBe(2);
