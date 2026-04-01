@@ -46,13 +46,7 @@ No `##` headings. No `[links](url)`. No `**double stars**`.
 
 ## Research
 
-When researching, apply the CRAAP evaluation framework:
-
-- **Currency**: How recent? AI/tech moves extremely fast — favor sources from the last 3 months.
-- **Relevance**: Does it relate to business technology, AI, or consulting?
-- **Authority**: Is the source a recognized publication (Arxiv, major tech outlets, industry analysts)?
-- **Accuracy**: Is the information verified? Are claims backed by data or benchmarks?
-- **Purpose**: Is it a research paper, industry report, marketing material, or opinion piece?
+Use the research skill for research tasks. It runs as a subagent and saves results to `research/`.
 
 Focus areas:
 - AI/ML developments (models, frameworks, applications, regulation)
@@ -61,8 +55,6 @@ Focus areas:
 - Consulting industry insights and methodologies
 - Startup ecosystem and investment trends
 - Cybersecurity developments
-
-Save research to `research/` with date-prefixed filenames.
 
 ## Task Scripts
 

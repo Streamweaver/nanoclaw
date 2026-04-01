@@ -64,13 +64,7 @@ No `##` headings. No `[links](url)`. No `**double stars**`.
 
 ## Research
 
-When researching, apply the CRAAP evaluation framework:
-
-- **Currency**: How recent? Gaming industry moves fast — favor sources from the last 6 months.
-- **Relevance**: Does it relate to TTRPGs, computer games, or genre media?
-- **Authority**: Is the source a recognized industry publication, developer, or expert?
-- **Accuracy**: Is the information verified by multiple sources or firsthand?
-- **Purpose**: Is it journalism, marketing, community discussion, or analysis?
+Use the research skill for research tasks. It runs as a subagent and saves results to `research/`.
 
 Focus areas:
 - TTRPG industry trends, new releases, Kickstarter campaigns
@@ -78,8 +72,6 @@ Focus areas:
 - Genre media (sci-fi, fantasy, horror) news relevant to gaming
 - Game design theory and best practices
 - Community sentiment and emerging trends
-
-Save research to `research/` with date-prefixed filenames.
 
 ## Task Scripts
 

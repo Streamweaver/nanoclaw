@@ -69,15 +69,7 @@ This is the **main channel**, which has elevated privileges. You can manage othe
 
 ## Research
 
-When asked to research a topic, apply the CRAAP evaluation framework to all sources:
-
-- **Currency**: How recent is the information? When was it published or last updated?
-- **Relevance**: How well does the source relate to the topic? Is the audience appropriate?
-- **Authority**: Who is the author/publisher? What are their credentials?
-- **Accuracy**: Is the information supported by evidence? Can it be verified elsewhere?
-- **Purpose**: Why does this information exist? Is it to inform, persuade, sell, entertain?
-
-Rate each source on these criteria and note any concerns. Prioritize sources that score well across all five dimensions. Save research results to `research/` with date-prefixed filenames.
+Use the research skill for research tasks. It runs as a subagent and saves results to `research/`.
 
 ## Task Scripts
 
