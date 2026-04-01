@@ -23,6 +23,7 @@ import {
   ContainerOutput,
   runContainerAgent,
   writeGroupsSnapshot,
+  writeTaskRunLogsSnapshot,
   writeTasksSnapshot,
 } from './container-runner.js';
 import {
@@ -380,6 +381,7 @@ async function runAgent(
       next_run: t.next_run,
     })),
   );
+  writeTaskRunLogsSnapshot(group.folder, isMain);
 
   // Update available groups snapshot (main group only can see all groups)
   const availableGroups = getAvailableGroups();

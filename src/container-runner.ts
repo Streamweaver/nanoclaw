@@ -16,6 +16,7 @@ import {
   IDLE_TIMEOUT,
   TIMEZONE,
 } from './config.js';
+import { getTaskRunLogs } from './db.js';
 import { resolveGroupFolderPath, resolveGroupIpcPath } from './group-folder.js';
 import { logger } from './logger.js';
 import {
@@ -691,6 +692,22 @@ export function writeTasksSnapshot(
 
   const tasksFile = path.join(groupIpcDir, 'current_tasks.json');
   fs.writeFileSync(tasksFile, JSON.stringify(filteredTasks, null, 2));
+}
+
+export function writeTaskRunLogsSnapshot(
+  groupFolder: string,
+  isMain: boolean,
+): void {
+  const groupIpcDir = resolveGroupIpcPath(groupFolder);
+  fs.mkdirSync(groupIpcDir, { recursive: true });
+
+  // Get recent runs. Main sees all; others filtered by group.
+  const runs = isMain
+    ? getTaskRunLogs({ limit: 100 })
+    : getTaskRunLogs({ groupFolder, limit: 100 });
+
+  const logsFile = path.join(groupIpcDir, 'task_run_logs.json');
+  fs.writeFileSync(logsFile, JSON.stringify(runs, null, 2));
 }
 
 export interface AvailableGroup {

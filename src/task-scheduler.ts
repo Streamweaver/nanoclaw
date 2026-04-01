@@ -6,6 +6,7 @@ import { ASSISTANT_NAME, SCHEDULER_POLL_INTERVAL, TIMEZONE } from './config.js';
 import {
   ContainerOutput,
   runContainerAgent,
+  writeTaskRunLogsSnapshot,
   writeTasksSnapshot,
 } from './container-runner.js';
 import {
@@ -146,6 +147,7 @@ async function runTask(
       next_run: t.next_run,
     })),
   );
+  writeTaskRunLogsSnapshot(task.group_folder, isMain);
 
   let result: string | null = null;
   let error: string | null = null;
