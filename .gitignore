@@ -65,6 +65,9 @@ groups/techtavern/email_drafts/*
 .env
 agent-names.md
 
+# Runtime
+.nanoclaw.pid
+
 # Temp files
 .tmp-*
 
