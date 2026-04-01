@@ -219,9 +219,9 @@ export function startAgentmailBridge(deps: BridgeDeps): http.Server | null {
     res.end('not found');
   });
 
-  server.listen(AGENTMAIL_WEBHOOK_PORT, () => {
+  server.listen(AGENTMAIL_WEBHOOK_PORT, '127.0.0.1', () => {
     logger.info(
-      { port: AGENTMAIL_WEBHOOK_PORT },
+      { port: AGENTMAIL_WEBHOOK_PORT, host: '127.0.0.1' },
       'Agentmail webhook bridge started',
     );
   });
