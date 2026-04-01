@@ -540,6 +540,48 @@ export function logTaskRun(log: TaskRunLog): void {
   );
 }
 
+export interface TaskRunLogRow {
+  task_id: string;
+  run_at: string;
+  duration_ms: number;
+  status: string;
+  result: string | null;
+  error: string | null;
+}
+
+export function getTaskRunLogs(opts: {
+  taskId?: string;
+  groupFolder?: string;
+  limit?: number;
+}): TaskRunLogRow[] {
+  const limit = opts.limit ?? 50;
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+
+  if (opts.taskId) {
+    conditions.push('l.task_id = ?');
+    params.push(opts.taskId);
+  }
+  if (opts.groupFolder) {
+    conditions.push('t.group_folder = ?');
+    params.push(opts.groupFolder);
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  params.push(limit);
+
+  return db
+    .prepare(
+      `SELECT l.task_id, l.run_at, l.duration_ms, l.status, l.result, l.error
+       FROM task_run_logs l
+       JOIN scheduled_tasks t ON l.task_id = t.id
+       ${where}
+       ORDER BY l.run_at DESC
+       LIMIT ?`,
+    )
+    .all(...params) as TaskRunLogRow[];
+}
+
 // --- Router state accessors ---
 
 export function getRouterState(key: string): string | undefined {
